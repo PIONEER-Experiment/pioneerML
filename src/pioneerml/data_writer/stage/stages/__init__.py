@@ -1,4 +1,4 @@
-from .base_stage import BaseWriterStage
+from .base_writer_stage import BaseWriterStage
 from .append_chunk_stage import AppendChunkStage
 from .buffer_chunk_stage import BufferChunkStage
 from .close_sinks_stage import CloseSinksStage

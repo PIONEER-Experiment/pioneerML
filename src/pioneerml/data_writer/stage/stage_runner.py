@@ -7,7 +7,7 @@ from pioneerml.staged_runtime import PhaseRunner, StageRunner
 from pioneerml.staged_runtime.stage_observers import StageObserver
 
 from .stage_context import WriterStageContext
-from .stages.base_stage import BaseWriterStage
+from .stages.base_writer_stage import BaseWriterStage
 
 
 class WriterStageRunner:

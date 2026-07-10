@@ -6,10 +6,10 @@ from typing import Any
 import numpy as np
 
 from ...array_store.ndarray_store import NDArrayStore
-from .base_stage import BaseStage
+from .base_loader_stage import BaseLoaderStage
 
 
-class GraphFeatureStage(BaseStage):
+class GraphFeatureStage(BaseLoaderStage):
     """Base stage for graph-level feature construction."""
 
     name = "build_graph_features"

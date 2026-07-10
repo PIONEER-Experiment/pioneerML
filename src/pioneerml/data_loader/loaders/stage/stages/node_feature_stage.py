@@ -6,10 +6,10 @@ from typing import Any
 import numpy as np
 
 from ...array_store.ndarray_store import NDArrayStore
-from .base_stage import BaseStage
+from .base_loader_stage import BaseLoaderStage
 
 
-class NodeFeatureStage(BaseStage):
+class NodeFeatureStage(BaseLoaderStage):
     """Base stage that builds node-level features and sorted edge inputs."""
 
     name = "build_nodes"

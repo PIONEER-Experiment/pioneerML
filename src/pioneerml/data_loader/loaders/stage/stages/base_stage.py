@@ -1,30 +1,16 @@
 from __future__ import annotations
 
-from abc import abstractmethod
-from collections.abc import MutableMapping
-from typing import Any, TYPE_CHECKING
+import warnings
 
-from pioneerml.staged_runtime import BaseStage as RuntimeBaseStage
+from .base_loader_stage import BaseLoaderStage
 
-if TYPE_CHECKING:
-    from ...structured.structured_loader import StructuredLoader
+warnings.warn(
+    "pioneerml.data_loader.loaders.stage.stages.base_stage.BaseStage is deprecated; "
+    "use pioneerml.data_loader.loaders.stage.stages.base_loader_stage.BaseLoaderStage instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
+BaseStage = BaseLoaderStage
 
-class BaseStage(RuntimeBaseStage):
-    """Loader stage base with enforced StructuredLoader owner type."""
-
-    def run(self, *, state: MutableMapping[str, Any], owner) -> None:
-        from ...structured.structured_loader import StructuredLoader
-
-        if not isinstance(owner, StructuredLoader):
-            raise TypeError(
-                f"{self.__class__.__name__} expected owner type StructuredLoader, got {type(owner).__name__}."
-            )
-        self.run_loader(state=state, owner=owner)
-
-    @abstractmethod
-    def run_loader(self, *, state: MutableMapping[str, Any], owner: "StructuredLoader") -> None:
-        raise NotImplementedError
-
-
-BaseLoaderStage = BaseStage
+__all__ = ["BaseLoaderStage", "BaseStage"]

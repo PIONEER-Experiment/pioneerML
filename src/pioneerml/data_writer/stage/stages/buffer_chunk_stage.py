@@ -5,7 +5,7 @@ from typing import Any
 
 import numpy as np
 
-from .base_stage import BaseWriterStage
+from .base_writer_stage import BaseWriterStage
 
 
 class BufferChunkStage(BaseWriterStage):

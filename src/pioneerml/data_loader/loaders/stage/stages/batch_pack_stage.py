@@ -5,10 +5,10 @@ from typing import Any
 
 import torch
 
-from .base_stage import BaseStage
+from .base_loader_stage import BaseLoaderStage
 
 
-class BatchPackStage(BaseStage):
+class BatchPackStage(BaseLoaderStage):
     """Base stage that packs chunk numpy arrays into torch tensors."""
 
     name = "pack_batch"

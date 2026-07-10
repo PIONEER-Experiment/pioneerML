@@ -5,10 +5,10 @@ from typing import Any
 
 import numpy as np
 
-from .base_stage import BaseStage
+from .base_loader_stage import BaseLoaderStage
 
 
-class EdgeFeatureStage(BaseStage):
+class EdgeFeatureStage(BaseLoaderStage):
     """Base stage that builds edge index and edge feature arrays."""
 
     name = "build_edges"

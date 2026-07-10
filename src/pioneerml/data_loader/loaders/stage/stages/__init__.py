@@ -1,5 +1,4 @@
-from .base_stage import BaseStage
-from .base_stage import BaseLoaderStage
+from .base_loader_stage import BaseLoaderStage
 from .batch_pack_stage import BatchPackStage
 from .distributed_shard_stage import DistributedShardStage
 from .edge_feature_stage import EdgeFeatureStage
@@ -31,3 +30,17 @@ __all__ = [
     "RowJoinStage",
     "RowShuffleStage",
 ]
+
+
+def __getattr__(name: str):
+    if name == "BaseStage":
+        import warnings
+
+        warnings.warn(
+            "pioneerml.data_loader.loaders.stage.stages.BaseStage is deprecated; "
+            "use BaseLoaderStage instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return BaseLoaderStage
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

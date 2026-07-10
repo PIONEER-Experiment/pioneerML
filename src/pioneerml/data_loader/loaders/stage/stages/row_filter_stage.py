@@ -8,10 +8,10 @@ import pyarrow as pa
 
 from ...config import SplitSampleConfig
 from ...utils.hashing import SAMPLE_STREAM_DOMAIN_SEED, keyed_uniform01
-from .base_stage import BaseStage
+from .base_loader_stage import BaseLoaderStage
 
 
-class RowFilterStage(BaseStage):
+class RowFilterStage(BaseLoaderStage):
     """Base row-level deterministic split/sample filter."""
 
     name = "row_filter"

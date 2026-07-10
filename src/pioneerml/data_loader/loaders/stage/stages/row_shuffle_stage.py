@@ -6,10 +6,10 @@ from typing import Any
 import numpy as np
 import pyarrow as pa
 
-from .base_stage import BaseStage
+from .base_loader_stage import BaseLoaderStage
 
 
-class RowShuffleStage(BaseStage):
+class RowShuffleStage(BaseLoaderStage):
     """Shuffle surviving rows before loader-specific tensor packing."""
 
     name = "row_shuffle"

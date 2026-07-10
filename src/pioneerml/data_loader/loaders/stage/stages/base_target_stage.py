@@ -3,10 +3,10 @@ from __future__ import annotations
 from collections.abc import MutableMapping
 from typing import Any
 
-from .base_stage import BaseStage
+from .base_loader_stage import BaseLoaderStage
 
 
-class BaseTargetStage(BaseStage):
+class BaseTargetStage(BaseLoaderStage):
     """Base stage for target construction."""
 
     provides: tuple[str, ...] = ()

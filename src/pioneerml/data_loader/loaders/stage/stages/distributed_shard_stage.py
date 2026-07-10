@@ -8,10 +8,10 @@ import numpy as np
 import pyarrow as pa
 
 from ...utils.hashing import splitmix64
-from .base_stage import BaseStage
+from .base_loader_stage import BaseLoaderStage
 
 
-class DistributedShardStage(BaseStage):
+class DistributedShardStage(BaseLoaderStage):
     """Deterministic row sharding across distributed ranks using event_id hashing."""
 
     name = "distributed_shard"

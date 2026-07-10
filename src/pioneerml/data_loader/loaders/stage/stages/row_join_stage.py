@@ -8,10 +8,10 @@ import pyarrow as pa
 from pioneerml.data_loader.loaders.array_store.ndarray_store import NDArrayColumnSpec
 from pioneerml.data_loader.loaders.input_source import InputBackend, InputSourceSet
 
-from .base_stage import BaseStage
+from .base_loader_stage import BaseLoaderStage
 
 
-class RowJoinStage(BaseStage):
+class RowJoinStage(BaseLoaderStage):
     """Row-level aligned join stage configured from input sources."""
 
     name = "row_join"

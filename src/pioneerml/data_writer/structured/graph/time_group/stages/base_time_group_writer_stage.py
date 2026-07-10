@@ -4,7 +4,7 @@ from abc import abstractmethod
 from collections.abc import MutableMapping
 from typing import Any, TYPE_CHECKING
 
-from pioneerml.data_writer.stage.stages.base_stage import BaseWriterStage
+from pioneerml.data_writer.stage.stages.base_writer_stage import BaseWriterStage
 
 if TYPE_CHECKING:
     from ..time_group_graph_data_writer import TimeGroupGraphDataWriter

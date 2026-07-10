@@ -23,7 +23,7 @@ from pioneerml.staged_runtime.stage_observers import (
     StageObserver,
     TimingObserver,
 )
-from pioneerml.data_loader.loaders.stage.stages import BaseStage
+from pioneerml.data_loader.loaders.stage.stages import BaseLoaderStage
 
 LOGGER = logging.getLogger(__name__)
 
@@ -94,7 +94,7 @@ class StructuredLoader(BaseLoader):
         data_flow_config: DataFlowConfig | None = None,
         split_config: SplitSampleConfig | None = None,
         input_backend: InputBackend | None = None,
-        stage_overrides: dict[str, BaseStage] | None = None,
+        stage_overrides: dict[str, BaseLoaderStage] | None = None,
         stage_observer: StageObserver | None = None,
         profiling: dict[str, Any] | None = None,
     ) -> None:
@@ -176,14 +176,14 @@ class StructuredLoader(BaseLoader):
         raise NotImplementedError
 
     @abstractmethod
-    def default_stages(self) -> dict[str, BaseStage]:
+    def default_stages(self) -> dict[str, BaseLoaderStage]:
         raise NotImplementedError
 
     @abstractmethod
     def input_schema(self) -> LoaderSchema:
         raise NotImplementedError
 
-    def _build_stage_sequence(self) -> list[BaseStage]:
+    def _build_stage_sequence(self) -> list[BaseLoaderStage]:
         stages = dict(self.default_stages())
         stages.update(self.stage_overrides)
         order = self.default_stage_order()

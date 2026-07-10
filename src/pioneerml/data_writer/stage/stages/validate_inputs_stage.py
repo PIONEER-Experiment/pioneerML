@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import MutableMapping, Sequence
 from typing import Any
 
-from .base_stage import BaseWriterStage
+from .base_writer_stage import BaseWriterStage
 
 
 class ValidateInputsStage(BaseWriterStage):

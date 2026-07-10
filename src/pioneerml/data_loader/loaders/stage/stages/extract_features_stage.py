@@ -7,12 +7,12 @@ import numpy as np
 import pyarrow as pa
 
 from ...array_store.ndarray_store import NDArrayColumnSpec, NDArrayStore
-from .base_stage import BaseStage
+from .base_loader_stage import BaseLoaderStage
 
 CustomExtractor = Callable[[pa.Table, Any, MutableMapping[str, Any]], dict[str, np.ndarray] | NDArrayStore]
 
 
-class ExtractFeaturesStage(BaseStage):
+class ExtractFeaturesStage(BaseLoaderStage):
     """General Arrow->ndarray extraction stage with automatic nesting support."""
 
     name = "extract_features"
