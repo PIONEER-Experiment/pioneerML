@@ -154,3 +154,6 @@ workspace/
 #cache
 .cache/
 .Trash-*
+
+# Understand Anything local graph artifacts
+.understand-anything/

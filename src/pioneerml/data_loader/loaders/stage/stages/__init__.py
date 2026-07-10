@@ -12,6 +12,7 @@ from .node_feature_stage import NodeFeatureStage
 from .node_target_stage import NodeTargetStage
 from .row_filter_stage import RowFilterStage
 from .row_join_stage import RowJoinStage
+from .row_shuffle_stage import RowShuffleStage
 
 __all__ = [
     "BaseLoaderStage",
@@ -28,4 +29,5 @@ __all__ = [
     "NodeTargetStage",
     "RowFilterStage",
     "RowJoinStage",
+    "RowShuffleStage",
 ]
