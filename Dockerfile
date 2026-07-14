@@ -74,10 +74,8 @@ COPY requirements.txt requirements.txt
 COPY pyproject.toml pyproject.toml
 COPY README.md README.md
 COPY src src
-COPY external external
 COPY scripts scripts
-COPY notebooks notebooks
-COPY tests tests
+COPY plugins plugins
 
 ENV PIP_INDEX_URL="https://download.pytorch.org/whl/cu126"
 ENV PIP_EXTRA_INDEX_URL="https://pypi.org/simple"
@@ -86,9 +84,6 @@ ENV UV_PIP_EXTRA_INDEX_URL="https://pypi.org/simple"
 ENV PYTHON_VERSION=3.10
 
 RUN ./scripts/env/setup_uv_conda.sh
-
-RUN conda run -n pioneerml bash -lc "cd external/pioneerml_dataloaders && ./scripts/build.sh"
-RUN conda run -n pioneerml bash -lc "pip install -e external/pioneerml_dataloaders/build/bindings"
 
 # Initialize ZenML repository for the workspace.
 RUN conda run -n pioneerml bash -lc "zenml init"
