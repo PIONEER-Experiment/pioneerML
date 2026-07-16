@@ -111,6 +111,7 @@ Thumbs.db
 
 # Artifacts
 artifacts/
+.artifacts/
 .code-instructions/
 .github/
 .claude/

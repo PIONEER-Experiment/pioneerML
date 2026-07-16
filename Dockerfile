@@ -40,6 +40,37 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# --- Development and debugging tools ---
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    vim \
+    nano \
+    less \
+    tree \
+    tmux \
+    bash-completion \
+    man-db \
+    file \
+    jq \
+    ripgrep \
+    fd-find \
+    git-lfs \
+    gdb \
+    strace \
+    ltrace \
+    valgrind \
+    procps \
+    psmisc \
+    htop \
+    iproute2 \
+    iputils-ping \
+    net-tools \
+    dnsutils \
+    netcat-openbsd \
+    openssh-client \
+    rsync \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
 # Provide CMake config stubs to avoid Arrow dependency warnings.
 RUN mkdir -p /usr/local/lib/cmake/lz4 /usr/local/lib/cmake/re2 /usr/local/lib/cmake/thrift \
     && printf "add_library(lz4::lz4 SHARED IMPORTED)\nset_target_properties(lz4::lz4 PROPERTIES IMPORTED_LOCATION /usr/lib/x86_64-linux-gnu/liblz4.so)\n" \
@@ -85,11 +116,18 @@ ENV PYTHON_VERSION=3.10
 
 RUN ./scripts/env/setup_uv_conda.sh
 
+# Install ROOT/PyROOT into the notebook/runtime env for ROOT and RNTuple work.
+RUN conda install -y -n pioneerml -c conda-forge root \
+    && conda clean -afy
+
 # Initialize ZenML repository for the workspace.
 RUN conda run -n pioneerml bash -lc "zenml init"
 
 ENV CONDA_DEFAULT_ENV=pioneerml
 ENV PATH="/opt/conda/envs/pioneerml/bin:${PATH}"
+# Prefer the Conda environment's C++ runtime so PyROOT/cppyy does not bind to
+# Ubuntu's older libstdc++ first. Keep CUDA and NVIDIA runtime libraries visible.
+ENV LD_LIBRARY_PATH="/opt/conda/envs/pioneerml/lib:/usr/local/cuda/lib64:/usr/local/nvidia/lib:/usr/local/nvidia/lib64"
 ENTRYPOINT ["bash", "-lc"]
 CMD ["bash"]
 

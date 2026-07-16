@@ -6,6 +6,7 @@ from .factory import WriterFactory, REGISTRY as WRITER_REGISTRY
 from .backends import (
     OutputBackend,
     ParquetOutputBackend,
+    RNTupleOutputBackend,
     register_output_backend,
     create_output_backend,
     list_output_backends,
@@ -29,6 +30,7 @@ __all__ = [
     "WRITER_REGISTRY",
     "OutputBackend",
     "ParquetOutputBackend",
+    "RNTupleOutputBackend",
     "register_output_backend",
     "create_output_backend",
     "list_output_backends",
