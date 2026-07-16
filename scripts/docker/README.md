@@ -10,6 +10,7 @@ Optional:
 
 ```bash
 ./scripts/docker/build.sh --tag pioneerml --version 0.1.0
+./scripts/docker/build.sh --no-cache
 ```
 
 ## Run

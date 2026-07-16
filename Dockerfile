@@ -91,7 +91,7 @@ RUN if [ -f /usr/local/cuda/lib64/libnvrtc.so.12 ]; then \
     fi
 
 ENV CONDA_DIR=/opt/conda
-RUN curl -fsSL https://repo.anaconda.com/miniconda/Miniconda3-py311_24.3.0-0-Linux-x86_64.sh -o /tmp/miniconda.sh \
+RUN curl -fsSL https://repo.anaconda.com/miniconda/Miniconda3-py313_26.5.3-1-Linux-x86_64.sh -o /tmp/miniconda.sh \
     && bash /tmp/miniconda.sh -b -p "${CONDA_DIR}" \
     && rm /tmp/miniconda.sh
 
@@ -106,19 +106,21 @@ COPY pyproject.toml pyproject.toml
 COPY README.md README.md
 COPY src src
 COPY scripts scripts
-COPY plugins plugins
 
 ENV PIP_INDEX_URL="https://download.pytorch.org/whl/cu126"
 ENV PIP_EXTRA_INDEX_URL="https://pypi.org/simple"
 ENV UV_PIP_INDEX_URL="https://download.pytorch.org/whl/cu126"
 ENV UV_PIP_EXTRA_INDEX_URL="https://pypi.org/simple"
-ENV PYTHON_VERSION=3.10
+ENV PYTHON_VERSION=3.13
+
+# Install Conda-managed binary packages before uv installs Python dependencies.
+# This prevents a later ROOT solve from replacing uv-installed packages.
+RUN conda create -y -n pioneerml --override-channels -c conda-forge "python=${PYTHON_VERSION}" root \
+    && conda clean -afy
 
 RUN ./scripts/env/setup_uv_conda.sh
 
-# Install ROOT/PyROOT into the notebook/runtime env for ROOT and RNTuple work.
-RUN conda install -y -n pioneerml -c conda-forge root \
-    && conda clean -afy
+COPY plugins plugins
 
 # Initialize ZenML repository for the workspace.
 RUN conda run -n pioneerml bash -lc "zenml init"

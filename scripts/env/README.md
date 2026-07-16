@@ -10,6 +10,7 @@ Pip
 Conda **RECOMMENDED**
 -----
 - `./scripts/env/setup_uv_conda.sh`
+- The project environment uses Python 3.13.
 
 uv (fast venv + resolver)
 -------------------------
@@ -19,6 +20,8 @@ uv (fast venv + resolver)
   ./scripts/env/setup_uv_venv.sh
   source .venv/bin/activate
   ```
+- The project environment uses Python 3.13. If an existing `.venv` uses another Python version,
+  the setup script recreates it.
 - The setup scripts install the repo in editable mode (`uv pip install -e .`) so `import pioneerml`
   works without PYTHONPATH hacks, and register a Jupyter kernel named `pioneerml`.
 
