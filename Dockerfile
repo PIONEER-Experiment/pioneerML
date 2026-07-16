@@ -1,94 +1,22 @@
-# CUDA runtime image enables GPU access when the container is run with --gpus.
-FROM nvidia/cuda:12.8.0-cudnn-devel-ubuntu22.04
+# CUDA-enabled PyTorch wheels provide the user-space CUDA runtime. GPU access is
+# supplied at runtime by the host NVIDIA driver and NVIDIA Container Toolkit.
+FROM ubuntu:22.04
 
 ARG PIONEERML_VERSION=dev
 ENV PIONEERML_VERSION=${PIONEERML_VERSION}
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# --- Arrow repo (REQUIRED) ---
+# PyArrow, PyTorch, and PyTorch Geometric are installed from prebuilt wheels, so
+# the image does not need CUDA, Arrow, or C++ development packages.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
-    gnupg \
-    lsb-release \
-    && curl -fsSL https://apache.jfrog.io/artifactory/arrow/ubuntu/apache-arrow-apt-source-latest-$(lsb_release -cs).deb \
-       -o /tmp/apache-arrow-apt.deb \
-    && apt-get install -y /tmp/apache-arrow-apt.deb \
-    && rm /tmp/apache-arrow-apt.deb
-
-# --- System deps ---
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    cmake \
     git \
-    pkg-config \
-    unzip \
-    libcurl4-openssl-dev \
-    libarrow-dev \
-    libparquet-dev \
-    libprotobuf-dev \
-    libthrift-dev \
-    libre2-dev \
-    liblz4-dev \
-    libbrotli-dev \
-    libsnappy-dev \
-    libssl-dev \
-    libspdlog-dev \
-    libtbb-dev \
-    nlohmann-json3-dev \
-    zlib1g-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# --- Development and debugging tools ---
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    vim \
     nano \
-    less \
-    tree \
-    tmux \
-    bash-completion \
-    man-db \
-    file \
-    jq \
-    ripgrep \
-    fd-find \
-    git-lfs \
-    gdb \
-    strace \
-    ltrace \
-    valgrind \
-    procps \
-    psmisc \
-    htop \
-    iproute2 \
-    iputils-ping \
-    net-tools \
-    dnsutils \
-    netcat-openbsd \
-    openssh-client \
     rsync \
     wget \
     && rm -rf /var/lib/apt/lists/*
-
-# Provide CMake config stubs to avoid Arrow dependency warnings.
-RUN mkdir -p /usr/local/lib/cmake/lz4 /usr/local/lib/cmake/re2 /usr/local/lib/cmake/thrift \
-    && printf "add_library(lz4::lz4 SHARED IMPORTED)\nset_target_properties(lz4::lz4 PROPERTIES IMPORTED_LOCATION /usr/lib/x86_64-linux-gnu/liblz4.so)\n" \
-       > /usr/local/lib/cmake/lz4/lz4Config.cmake \
-    && printf "add_library(re2::re2 SHARED IMPORTED)\nset_target_properties(re2::re2 PROPERTIES IMPORTED_LOCATION /usr/lib/x86_64-linux-gnu/libre2.so)\n" \
-       > /usr/local/lib/cmake/re2/re2Config.cmake \
-    && printf "add_library(Thrift::thrift SHARED IMPORTED)\nset_target_properties(Thrift::thrift PROPERTIES IMPORTED_LOCATION /usr/lib/x86_64-linux-gnu/libthrift.so)\n" \
-       > /usr/local/lib/cmake/thrift/ThriftConfig.cmake
-
-# Help CMake find NVTX3 and NVRTC for Torch builds (no hardcoded host paths).
-RUN if [ -f /usr/local/cuda/lib64/libnvrtc.so.12 ]; then \
-      ln -sf /usr/local/cuda/lib64/libnvrtc.so.12 /usr/local/cuda/lib64/libnvrtc.so; \
-    fi \
-    && if [ -d /usr/local/cuda/include/nvtx3 ]; then \
-      mkdir -p /usr/local/lib/cmake/nvtx3; \
-      printf "add_library(nvtx3::nvtx3 INTERFACE IMPORTED)\nset_target_properties(nvtx3::nvtx3 PROPERTIES INTERFACE_INCLUDE_DIRECTORIES /usr/local/cuda/include)\n" \
-        > /usr/local/lib/cmake/nvtx3/nvtx3Config.cmake; \
-    fi
 
 ENV CONDA_DIR=/opt/conda
 RUN curl -fsSL https://repo.anaconda.com/miniconda/Miniconda3-py313_26.5.3-1-Linux-x86_64.sh -o /tmp/miniconda.sh \
@@ -97,7 +25,6 @@ RUN curl -fsSL https://repo.anaconda.com/miniconda/Miniconda3-py313_26.5.3-1-Lin
 
 ENV PATH="${CONDA_DIR}/bin:${PATH}"
 SHELL ["bash", "-lc"]
-ENV CUDA_HOME=/usr/local/cuda
 
 WORKDIR /workspace
 
@@ -127,9 +54,9 @@ RUN conda run -n pioneerml bash -lc "zenml init"
 
 ENV CONDA_DEFAULT_ENV=pioneerml
 ENV PATH="/opt/conda/envs/pioneerml/bin:${PATH}"
-# Prefer the Conda environment's C++ runtime so PyROOT/cppyy does not bind to
-# Ubuntu's older libstdc++ first. Keep CUDA and NVIDIA runtime libraries visible.
-ENV LD_LIBRARY_PATH="/opt/conda/envs/pioneerml/lib:/usr/local/cuda/lib64:/usr/local/nvidia/lib:/usr/local/nvidia/lib64"
+# Prefer the Conda environment's C++ runtime for PyROOT/cppyy. PyTorch's wheel
+# dependencies provide their CUDA user-space libraries inside the environment.
+ENV LD_LIBRARY_PATH="/opt/conda/envs/pioneerml/lib"
 ENTRYPOINT ["bash", "-lc"]
 CMD ["bash"]
 

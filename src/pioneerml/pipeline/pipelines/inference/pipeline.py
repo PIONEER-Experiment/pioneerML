@@ -2,18 +2,10 @@ from typing import Any
 
 from zenml import pipeline, step
 
-from pioneerml.pipeline.steps import (
-    BaseInferenceStep,
-    BaseModelHandleBuilderStep,
+from .direct import (
+    UnifiedInferenceStep,
+    UnifiedModelHandleBuilderStep,
 )
-
-
-class UnifiedModelHandleBuilderStep(BaseModelHandleBuilderStep):
-    step_key = "model_handle_builder"
-
-
-class UnifiedInferenceStep(BaseInferenceStep):
-    step_key = "inference"
 
 
 @step(name="build_model_handle", enable_cache=False)
