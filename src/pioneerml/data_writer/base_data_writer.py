@@ -58,7 +58,12 @@ class BaseDataWriter:
         shutil.copy2(src_path, dst_path)
 
     def write_table(self, *, table, dst_path: Path) -> None:
-        self.output_backend.write_table_atomic(table=table, dst_path=dst_path)
+        self.output_backend.write_table_atomic(table=self.prepare_output_table(table), dst_path=dst_path)
+
+    def prepare_output_table(self, table):
+        """Apply writer-level schema details before a table reaches a backend."""
+
+        return table
 
     def resolve_prediction_output_path(
         self,

@@ -43,7 +43,7 @@ class FinalizeBufferedWritesStage(BaseTimeGroupWriterStage):
                     empty_prediction_columns[str(key)] = np.empty((0, *tail_shape), dtype=values.dtype)
             else:
                 empty_prediction_columns = self._empty_prediction_columns(
-                    column_names=list(owner.output_schema().column_names())
+                    column_names=list(owner.output_schema().prediction_column_names())
                 )
 
             empty_event_ids = np.empty((0,), dtype=np.int64)
@@ -97,7 +97,10 @@ class FinalizeBufferedWritesStage(BaseTimeGroupWriterStage):
                     time_group_ids_np=carry_tg_ids,
                     group_id_column=group_id_column,
                 )
-                owner.output_backend.append_chunk(sink=entry["sink"], table=tail_table)
+                owner.output_backend.append_chunk(
+                    sink=entry["sink"],
+                    table=owner.prepare_output_table(tail_table),
+                )
                 stream_next[src_key] = int(tail_stop)
                 stream_buffers[src_key] = {
                     "prediction_event_ids_np": empty_event_ids,
