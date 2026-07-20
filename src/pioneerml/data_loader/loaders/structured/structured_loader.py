@@ -254,7 +254,15 @@ class StructuredLoader(BaseLoader):
                 continue
 
             if "graph_event_id" in chunk and row_offset != 0:
-                chunk["graph_event_id"] = chunk["graph_event_id"] + int(row_offset)
+                # Generic graph builders emit indices local to each parquet
+                # chunk and need promotion to file-local row indices. Some
+                # specialized builders (including PURITY) preserve the
+                # source event_id column instead. Those IDs are already
+                # file-global and must not receive the row offset a second
+                # time (for example, 4096 must not become 8192 in chunk 2).
+                graph_event_ids = chunk["graph_event_id"]
+                if not bool(chunk.get("graph_event_id_is_global", False)):
+                    chunk["graph_event_id"] = graph_event_ids + int(row_offset)
 
             num_graphs = int(chunk["num_graphs"])
             if num_graphs <= 0:
