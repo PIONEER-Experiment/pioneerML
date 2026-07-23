@@ -158,3 +158,21 @@ class GraphLoader(StructuredLoader):
         edge_attr = batch.x_edge.to(device, non_blocking=(device.type == "cuda"))
         node_graph_id = batch.node_graph_id.to(device, non_blocking=(device.type == "cuda"))
         return (x, edge_index, edge_attr, node_graph_id), {}
+
+    @staticmethod
+    def inference_event_ids(batch) -> list[int]:
+        event_ids = getattr(batch, "graph_event_id", None)
+        if not isinstance(event_ids, torch.Tensor):
+            return []
+        return [int(value) for value in event_ids.detach().cpu().reshape(-1).tolist()]
+
+    def split_inference_batch(self, batch) -> tuple[Data, Data] | None:
+        num_graphs = int(getattr(batch, "num_graphs", 0))
+        if num_graphs < 2 or not hasattr(batch, "to_dict"):
+            return None
+        midpoint = num_graphs // 2
+        chunk = dict(batch.to_dict())
+        return (
+            self._slice_chunk_batch(chunk, 0, midpoint),
+            self._slice_chunk_batch(chunk, midpoint, num_graphs),
+        )

@@ -23,4 +23,11 @@ class AppendChunkStage(BaseWriterStage):
         entry = sink_entries.get(str(src_path))
         if entry is None:
             raise RuntimeError(f"No open sink entry for source '{src_path}'.")
-        writer.output_backend.append_chunk(sink=entry["sink"], table=writer.prepare_output_table(table))
+        if hasattr(writer, "set_output_source_context"):
+            writer.set_output_source_context(src_path)
+        try:
+            prepared = writer.prepare_output_table(table)
+        finally:
+            if hasattr(writer, "set_output_source_context"):
+                writer.set_output_source_context(None)
+        writer.output_backend.append_chunk(sink=entry["sink"], table=prepared)

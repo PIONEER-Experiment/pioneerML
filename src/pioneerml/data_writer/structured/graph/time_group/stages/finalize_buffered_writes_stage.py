@@ -97,10 +97,14 @@ class FinalizeBufferedWritesStage(BaseTimeGroupWriterStage):
                     time_group_ids_np=carry_tg_ids,
                     group_id_column=group_id_column,
                 )
-                owner.output_backend.append_chunk(
-                    sink=entry["sink"],
-                    table=owner.prepare_output_table(tail_table),
-                )
+                if hasattr(owner, "set_output_source_context"):
+                    owner.set_output_source_context(src_path)
+                try:
+                    prepared_tail = owner.prepare_output_table(tail_table)
+                finally:
+                    if hasattr(owner, "set_output_source_context"):
+                        owner.set_output_source_context(None)
+                owner.output_backend.append_chunk(sink=entry["sink"], table=prepared_tail)
                 stream_next[src_key] = int(tail_stop)
                 stream_buffers[src_key] = {
                     "prediction_event_ids_np": empty_event_ids,
@@ -179,14 +183,20 @@ class FinalizeBufferedWritesStage(BaseTimeGroupWriterStage):
                 output_dir=output_dir,
                 output_path=scoped_output_path,
             )
-            pred, ts = owner.write_table_with_optional_timestamp(
-                table=table,
-                pred_path=pred_path,
-                output_dir=output_dir,
-                src_path=src_path,
-                write_timestamped=write_timestamped,
-                timestamp=timestamp,
-            )
+            if hasattr(owner, "set_output_source_context"):
+                owner.set_output_source_context(src_path)
+            try:
+                pred, ts = owner.write_table_with_optional_timestamp(
+                    table=table,
+                    pred_path=pred_path,
+                    output_dir=output_dir,
+                    src_path=src_path,
+                    write_timestamped=write_timestamped,
+                    timestamp=timestamp,
+                )
+            finally:
+                if hasattr(owner, "set_output_source_context"):
+                    owner.set_output_source_context(None)
             written.append(pred)
             if ts is not None:
                 written_ts.append(ts)

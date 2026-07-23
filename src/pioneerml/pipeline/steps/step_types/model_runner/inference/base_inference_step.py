@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import torch
 
-from pioneerml.data_writer.input_source import PredictionSet
+from pioneerml.inference import BaseInferenceBatchExecutor, InferenceBatchContext
 
 from .payloads import InferenceStepPayload
 from .resolvers import InferenceConfigResolver, InferenceStateResolver
@@ -14,7 +14,10 @@ class BaseInferenceStep(BaseModelRunnerStep):
     DEFAULT_CONFIG = merge_nested_dicts(
         base=BaseModelRunnerStep.DEFAULT_CONFIG,
         override={
-            "runtime": {"prefer_cuda": True},
+            "runtime": {
+                "prefer_cuda": True,
+            },
+            "batch_executor": {"type": "standard", "config": {}},
             "writer": {
                 "type": "required",
                 "config": {
@@ -72,11 +75,14 @@ class BaseInferenceStep(BaseModelRunnerStep):
             raise RuntimeError("Inference runtime_state missing valid 'inference_runtime'.")
 
         writer = runtime.get("writer")
+        batch_executor = runtime.get("batch_executor")
         source_items = runtime.get("source_items")
         if writer is None or not hasattr(writer, "on_start"):
             raise RuntimeError("Inference runtime missing valid writer object.")
         if not isinstance(source_items, list):
             raise RuntimeError("Inference runtime missing valid source_items list.")
+        if not isinstance(batch_executor, BaseInferenceBatchExecutor):
+            raise RuntimeError("Inference runtime missing valid batch_executor.")
 
         writer_cfg = writer.run_config
         chunk_output_path = runtime.get("output_path") if len(source_items) == 1 else None
@@ -107,45 +113,41 @@ class BaseInferenceStep(BaseModelRunnerStep):
                 if not hasattr(writer, "build_prediction_set"):
                     raise RuntimeError("Inference writer must implement build_prediction_set(...).")
 
-                for batch in source_loader.make_dataloader(
-                    shuffle_batches=shuffle_batches,
-                    shuffle_within_batch=shuffle_within_batch,
-                ):
-                    model_args, model_kwargs = source_loader.build_inference_model_input(
-                        batch=batch,
-                        device=device,
-                        cfg=cfg,
-                    )
-                    if not isinstance(model_args, tuple):
-                        raise RuntimeError(
-                            f"{source_loader.__class__.__name__}.build_inference_model_input(...) must return tuple args as first element."
-                        )
-                    if not isinstance(model_kwargs, dict):
-                        raise RuntimeError(
-                            f"{source_loader.__class__.__name__}.build_inference_model_input(...) must return dict kwargs as second element."
-                        )
+                source_context = InferenceBatchContext(
+                    batch=None,
+                    loader=source_loader,
+                    model=model,
+                    writer=writer,
+                    device=device,
+                    source_path=source_item["src_path"],
+                    source_num_rows=int(source_item["num_rows"]),
+                    config=cfg,
+                    output_dir=writer_cfg.output_dir,
+                    output_path=chunk_output_path,
+                    write_timestamped=bool(writer_cfg.write_timestamped),
+                    timestamp=writer_cfg.timestamp,
+                )
 
-                    model_output = model(*model_args, **model_kwargs)
-                    prediction_set = writer.build_prediction_set(
-                        batch=batch,
-                        model_output=model_output,
-                        src_path=source_item["src_path"],
-                        num_rows=int(source_item["num_rows"]),
-                        cfg=cfg,
-                    )
-                    if not isinstance(prediction_set, PredictionSet):
-                        raise RuntimeError(
-                            f"{writer.__class__.__name__}.build_prediction_set(...) must return PredictionSet."
-                        )
-                    writer.on_chunk(
-                        state=writer.chunk_state(
-                            prediction_set=prediction_set,
-                            output_dir=writer_cfg.output_dir,
-                            output_path=chunk_output_path,
-                            write_timestamped=bool(writer_cfg.write_timestamped),
-                            timestamp=writer_cfg.timestamp,
+                try:
+                    batches = iter(
+                        source_loader.make_dataloader(
+                            shuffle_batches=shuffle_batches,
+                            shuffle_within_batch=shuffle_within_batch,
                         )
                     )
+                except Exception as error:
+                    batch_executor.handle_loader_failure(context=source_context, error=error)
+                    continue
+
+                while True:
+                    try:
+                        batch = next(batches)
+                    except StopIteration:
+                        break
+                    except Exception as error:
+                        batch_executor.handle_loader_failure(context=source_context, error=error)
+                        break
+                    batch_executor.execute_batch(context=source_context.with_batch(batch))
 
         finalized = writer.on_finalize(state=start_state)
         run_outputs = dict(finalized.get("run_outputs") or {})
