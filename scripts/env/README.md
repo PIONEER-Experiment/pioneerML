@@ -37,4 +37,4 @@ Plugin note
 -----
 - This repo is the framework layer.
 - Model-specific examples and notebook workflows are provided by plugins.
-- Reference plugin repo: https://github.com/jaca230/pioneerML_base_plugin
+- Reference plugin repo: https://github.com/jaca230/pioneerML_example_plugin
