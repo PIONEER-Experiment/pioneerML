@@ -2,16 +2,18 @@
 # Install with: pip install -r requirements.txt
 # Or preferably uv pip install -r requirements.txt
 
-# Reproducible CUDA + PyG wheel sources (torch 2.8/cu126 stack).
---extra-index-url https://download.pytorch.org/whl/cu126
---find-links https://data.pyg.org/whl/torch-2.8.0+cu126.html
+# Reproducible CUDA + PyG wheel sources (torch 2.11/cu128 stack).
+# CUDA 12.8 supports Blackwell GPUs such as RTX 50-series while remaining
+# compatible with Ampere GPUs such as RTX A6000.
+--extra-index-url https://download.pytorch.org/whl/cu128
+--find-links https://data.pyg.org/whl/torch-2.11.0+cu128.html
 
 # Core ML/DL
-torch==2.8.0+cu126
-torchvision==0.23.0+cu126
-torchaudio==2.8.0+cu126
+torch==2.11.0+cu128
+torchvision==0.26.0+cu128
+torchaudio==2.11.0+cu128
 torch-geometric==2.6.1
-torch-cluster==1.6.3+pt28cu126
+torch-cluster==1.6.3+pt211cu128
 pytorch-lightning>=2.0.0
 numpy>=1.24.0
 scipy>=1.10.0

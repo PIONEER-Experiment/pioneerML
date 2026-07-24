@@ -5,6 +5,7 @@ from typing import Any
 
 from pioneerml.data_writer import BaseDataWriter, WriterFactory, WriterRunConfig
 from pioneerml.data_writer.backends import create_output_backend
+from pioneerml.inference import InferenceBatchExecutorFactory
 
 from ......resolver import BaseConfigResolver
 
@@ -19,6 +20,24 @@ class InferenceConfigResolver(BaseConfigResolver):
         cfg["runtime"] = {
             "prefer_cuda": bool(runtime_cfg.get("prefer_cuda", True)),
         }
+        batch_executor = cfg.get("batch_executor")
+        if not isinstance(batch_executor, Mapping):
+            raise TypeError("inference.batch_executor must be a mapping with keys ['type', 'config'].")
+        batch_executor = dict(batch_executor)
+        executor_type = batch_executor.get("type")
+        if not isinstance(executor_type, str) or not executor_type.strip():
+            raise ValueError("inference.batch_executor.type must be a non-empty string.")
+        executor_config = batch_executor.get("config", {})
+        if not isinstance(executor_config, Mapping):
+            raise TypeError("inference.batch_executor.config must be a mapping when provided.")
+        cfg["batch_executor"] = {
+            "type": executor_type.strip(),
+            "config": dict(executor_config),
+        }
+        self.step.runtime_state["inference_batch_executor_factory"] = InferenceBatchExecutorFactory(
+            executor_name=executor_type.strip(),
+            config=dict(executor_config),
+        )
         writer = cfg.get("writer")
         if not isinstance(writer, dict):
             raise TypeError("inference.writer must be a dict.")

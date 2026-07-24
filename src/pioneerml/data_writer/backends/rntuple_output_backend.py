@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -54,22 +55,27 @@ def _load_root():
             public:
               ArrowRNTupleSink(const std::string &path, const std::string &name,
                                const std::vector<std::string> &fieldNames,
-                               const std::vector<std::string> &fieldTypes) {
+                               const std::vector<std::string> &fieldTypes,
+                               const std::vector<std::string> &fieldDescriptions) {
+                if (fieldNames.size() != fieldTypes.size() ||
+                    fieldNames.size() != fieldDescriptions.size()) {
+                  throw std::runtime_error("RNTuple field name/type/description size mismatch");
+                }
                 auto model = ROOT::RNTupleModel::Create();
                 for (std::size_t i = 0; i < fieldNames.size(); ++i) {
-                  const auto &n = fieldNames[i]; const auto &t = fieldTypes[i];
-                  if (t == "bool") model->MakeField<bool>(n);
-                  else if (t == "int32") model->MakeField<std::int32_t>(n);
-                  else if (t == "int64") model->MakeField<std::int64_t>(n);
-                  else if (t == "float") model->MakeField<float>(n);
-                  else if (t == "double") model->MakeField<double>(n);
-                  else if (t == "string") model->MakeField<std::string>(n);
-                  else if (t == "vector<bool>") model->MakeField<std::vector<bool>>(n);
-                  else if (t == "vector<int32>") model->MakeField<std::vector<std::int32_t>>(n);
-                  else if (t == "vector<int64>") model->MakeField<std::vector<std::int64_t>>(n);
-                  else if (t == "vector<float>") model->MakeField<std::vector<float>>(n);
-                  else if (t == "vector<double>") model->MakeField<std::vector<double>>(n);
-                  else if (t == "vector<string>") model->MakeField<std::vector<std::string>>(n);
+                  const auto &n = fieldNames[i]; const auto &t = fieldTypes[i]; const auto &d = fieldDescriptions[i];
+                  if (t == "bool") model->MakeField<bool>(n, d);
+                  else if (t == "int32") model->MakeField<std::int32_t>(n, d);
+                  else if (t == "int64") model->MakeField<std::int64_t>(n, d);
+                  else if (t == "float") model->MakeField<float>(n, d);
+                  else if (t == "double") model->MakeField<double>(n, d);
+                  else if (t == "string") model->MakeField<std::string>(n, d);
+                  else if (t == "vector<bool>") model->MakeField<std::vector<bool>>(n, d);
+                  else if (t == "vector<int32>") model->MakeField<std::vector<std::int32_t>>(n, d);
+                  else if (t == "vector<int64>") model->MakeField<std::vector<std::int64_t>>(n, d);
+                  else if (t == "vector<float>") model->MakeField<std::vector<float>>(n, d);
+                  else if (t == "vector<double>") model->MakeField<std::vector<double>>(n, d);
+                  else if (t == "vector<string>") model->MakeField<std::vector<std::string>>(n, d);
                   else throw std::runtime_error("Unsupported RNTuple field type: " + t);
                 }
                 fWriter = ROOT::RNTupleWriter::Recreate(std::move(model), name, path);
@@ -125,6 +131,17 @@ def _field_type(data_type: pa.DataType) -> str:
     raise TypeError(f"Arrow type {data_type} is not supported by the RNTuple output backend.")
 
 
+def _field_description(field: pa.Field) -> str:
+    metadata = field.metadata or {}
+    if not metadata:
+        return ""
+    try:
+        decoded = {key.decode("utf-8"): value.decode("utf-8") for key, value in metadata.items()}
+    except UnicodeDecodeError as exc:
+        raise ValueError(f"RNTuple field metadata for {field.name!r} must be UTF-8.") from exc
+    return json.dumps(decoded, sort_keys=True, separators=(",", ":"))
+
+
 @dataclass
 class _RNTupleSink:
     dst_path: Path
@@ -161,9 +178,16 @@ class RNTupleOutputBackend(OutputBackend):
             root = _load_root()
             names = list(table.schema.names)
             types = [_field_type(field.type) for field in table.schema]
-            sink.writer = root.PioneerML.ArrowRNTupleSink(str(sink.part_path), sink.ntuple_name, names, types)
+            descriptions = [_field_description(field) for field in table.schema]
+            sink.writer = root.PioneerML.ArrowRNTupleSink(
+                str(sink.part_path),
+                sink.ntuple_name,
+                names,
+                types,
+                descriptions,
+            )
             sink.schema = table.schema
-        elif not table.schema.equals(sink.schema):
+        elif not table.schema.equals(sink.schema, check_metadata=True):
             raise ValueError(f"RNTuple chunk schema changed: expected {sink.schema}, got {table.schema}.")
 
         setters = {"bool": "SetBool", "int32": "SetI32", "int64": "SetI64", "float": "SetF32",

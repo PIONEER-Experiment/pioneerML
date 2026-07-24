@@ -23,6 +23,7 @@ class BatchPackStage(BaseLoaderStage):
         scalar_state_fields: dict[str, str] | None = None,
         scalar_layout_fields: dict[str, str] | None = None,
         optional_tensor_state_fields: dict[str, str] | None = None,
+        optional_scalar_state_fields: dict[str, str] | None = None,
     ) -> None:
         self.tensor_state_fields = dict(
             tensor_state_fields
@@ -46,6 +47,7 @@ class BatchPackStage(BaseLoaderStage):
                 "y_graph": "y_graph",
             }
         )
+        self.optional_scalar_state_fields = dict(optional_scalar_state_fields or {})
 
     @staticmethod
     def _as_torch(arr):
@@ -77,5 +79,8 @@ class BatchPackStage(BaseLoaderStage):
         for out_key, state_key in self.optional_tensor_state_fields.items():
             if state_key in state and state[state_key] is not None:
                 chunk_out[out_key] = self._as_torch(state[state_key])
+        for out_key, state_key in self.optional_scalar_state_fields.items():
+            if state_key in state and state[state_key] is not None:
+                chunk_out[out_key] = state[state_key]
 
         state["chunk_out"] = chunk_out

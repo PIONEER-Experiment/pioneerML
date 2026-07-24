@@ -10,6 +10,7 @@ from pioneerml.data_loader import BaseLoaderManager, LoaderFactory
 from pioneerml.data_loader.loaders.input_source import InputBackend, InputSourceSet
 from pioneerml.data_writer import WriterFactory
 from pioneerml.integration.pytorch.model_handles import BaseModelHandle
+from pioneerml.inference import BaseInferenceBatchExecutor, InferenceBatchExecutorFactory
 
 from ......resolver import BasePayloadResolver
 
@@ -32,6 +33,7 @@ class InferenceStateResolver(BasePayloadResolver):
             raise RuntimeError("Inference payloads missing mapping key 'model_handle_builder'.")
 
         writer_factory = runtime_state.get("writer_factory")
+        batch_executor_factory = runtime_state.get("inference_batch_executor_factory")
         model_handle = model_payload.get("model_handle")
         loader_manager = runtime_state.get("loader_manager")
 
@@ -42,6 +44,8 @@ class InferenceStateResolver(BasePayloadResolver):
             )
         if not isinstance(writer_factory, WriterFactory):
             raise RuntimeError("Inference runtime_state missing valid 'writer_factory'.")
+        if not isinstance(batch_executor_factory, InferenceBatchExecutorFactory):
+            raise RuntimeError("Inference runtime_state missing valid 'inference_batch_executor_factory'.")
         if not isinstance(model_handle, BaseModelHandle):
             raise RuntimeError("Inference payloads missing valid 'model_handle_builder.model_handle'.")
 
@@ -49,6 +53,7 @@ class InferenceStateResolver(BasePayloadResolver):
             cfg=dict(self.step.config_json),
             loader_manager=loader_manager,
             writer_factory=writer_factory,
+            batch_executor_factory=batch_executor_factory,
             model_handle=model_handle,
         )
 
@@ -58,9 +63,13 @@ class InferenceStateResolver(BasePayloadResolver):
         cfg: dict[str, Any],
         loader_manager: BaseLoaderManager,
         writer_factory: WriterFactory,
+        batch_executor_factory: InferenceBatchExecutorFactory,
         model_handle: BaseModelHandle,
     ) -> dict[str, Any]:
         writer = writer_factory.build()
+        batch_executor = batch_executor_factory.build()
+        if not isinstance(batch_executor, BaseInferenceBatchExecutor):
+            raise RuntimeError("Inference batch executor factory returned an invalid executor.")
         if not hasattr(writer, "build_prediction_set"):
             raise RuntimeError(
                 f"{writer.__class__.__name__} must implement build_prediction_set(...) for inference usage."
@@ -108,6 +117,7 @@ class InferenceStateResolver(BasePayloadResolver):
 
         return {
             "writer": writer,
+            "batch_executor": batch_executor,
             "device": device,
             "model": model,
             "source_items": source_items,

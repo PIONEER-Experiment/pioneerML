@@ -43,7 +43,7 @@ class FinalizeBufferedWritesStage(BaseTimeGroupWriterStage):
                     empty_prediction_columns[str(key)] = np.empty((0, *tail_shape), dtype=values.dtype)
             else:
                 empty_prediction_columns = self._empty_prediction_columns(
-                    column_names=list(owner.output_schema().column_names())
+                    column_names=list(owner.output_schema().prediction_column_names())
                 )
 
             empty_event_ids = np.empty((0,), dtype=np.int64)
@@ -97,7 +97,14 @@ class FinalizeBufferedWritesStage(BaseTimeGroupWriterStage):
                     time_group_ids_np=carry_tg_ids,
                     group_id_column=group_id_column,
                 )
-                owner.output_backend.append_chunk(sink=entry["sink"], table=tail_table)
+                if hasattr(owner, "set_output_source_context"):
+                    owner.set_output_source_context(src_path)
+                try:
+                    prepared_tail = owner.prepare_output_table(tail_table)
+                finally:
+                    if hasattr(owner, "set_output_source_context"):
+                        owner.set_output_source_context(None)
+                owner.output_backend.append_chunk(sink=entry["sink"], table=prepared_tail)
                 stream_next[src_key] = int(tail_stop)
                 stream_buffers[src_key] = {
                     "prediction_event_ids_np": empty_event_ids,
@@ -176,14 +183,20 @@ class FinalizeBufferedWritesStage(BaseTimeGroupWriterStage):
                 output_dir=output_dir,
                 output_path=scoped_output_path,
             )
-            pred, ts = owner.write_table_with_optional_timestamp(
-                table=table,
-                pred_path=pred_path,
-                output_dir=output_dir,
-                src_path=src_path,
-                write_timestamped=write_timestamped,
-                timestamp=timestamp,
-            )
+            if hasattr(owner, "set_output_source_context"):
+                owner.set_output_source_context(src_path)
+            try:
+                pred, ts = owner.write_table_with_optional_timestamp(
+                    table=table,
+                    pred_path=pred_path,
+                    output_dir=output_dir,
+                    src_path=src_path,
+                    write_timestamped=write_timestamped,
+                    timestamp=timestamp,
+                )
+            finally:
+                if hasattr(owner, "set_output_source_context"):
+                    owner.set_output_source_context(None)
             written.append(pred)
             if ts is not None:
                 written_ts.append(ts)

@@ -5,6 +5,8 @@ from collections.abc import MutableMapping
 from dataclasses import dataclass
 from typing import Any
 
+import pyarrow as pa
+
 from ..config import WriterRunConfig
 from ..base_data_writer import BaseDataWriter
 from ..array_store import OutputSchema
@@ -89,6 +91,9 @@ class StructuredDataWriter(BaseDataWriter, ABC):
     @abstractmethod
     def output_schema(self) -> OutputSchema:
         raise NotImplementedError
+
+    def prepare_output_table(self, table: pa.Table) -> pa.Table:
+        return self.output_schema().apply_metadata(table)
 
     def _phase_stage_spec(self, phase: str) -> tuple[list[str], dict[str, BaseWriterStage]]:
         key = str(phase).strip().lower()

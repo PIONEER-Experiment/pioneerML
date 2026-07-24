@@ -34,4 +34,4 @@ Forward ports (e.g. Jupyter):
 Plugin note:
 
 - The framework runs plugin-owned model implementations.
-- Reference plugin repo: https://github.com/jaca230/pioneerML_base_plugin
+- Reference plugin repo: https://github.com/jaca230/pioneerML_example_plugin

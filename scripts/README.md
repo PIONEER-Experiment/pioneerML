@@ -9,7 +9,7 @@ This folder contains environment/runtime helpers only:
 Model implementations and example notebooks are plugin-owned.
 
 Reference plugin:
-- https://github.com/jaca230/pioneerML_base_plugin
+- https://github.com/jaca230/pioneerML_example_plugin
 
 Jupyter start scripts write logs to `./.runtime/jupyter` by default.
 Override with `JUPYTER_LOG_DIR=/path/to/logs`.
