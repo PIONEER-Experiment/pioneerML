@@ -34,12 +34,6 @@ try:
 except Exception:  # pragma: no cover
     umap = None
 
-try:
-    from IPython.display import display  # type: ignore
-except Exception:  # pragma: no cover
-    display = None
-
-
 @PLOT_REGISTRY_DEF.register("embedding_space")
 class EmbeddingSpacePlot(ClassificationPlotBase):
     name = "embedding_space"
@@ -248,18 +242,4 @@ class EmbeddingSpacePlot(ClassificationPlotBase):
         ax.grid(True, linestyle="--", alpha=0.3)
         plt.tight_layout()
 
-        if save_path is not None:
-            save_path = str(save_path)
-            fig.savefig(save_path, dpi=150, bbox_inches="tight")
-        if show:
-            backend = plt.get_backend().lower()
-            if backend.startswith("agg"):
-                if display is not None:
-                    try:
-                        display(fig)
-                    except Exception:
-                        pass
-            else:
-                plt.show()
-        plt.close(fig)
-        return save_path
+        return self._finalize_figure(fig, save_path=save_path, show=show)

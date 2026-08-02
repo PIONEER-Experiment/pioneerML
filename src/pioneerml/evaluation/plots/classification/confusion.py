@@ -12,12 +12,6 @@ from sklearn.metrics import confusion_matrix
 from ..registry import REGISTRY as PLOT_REGISTRY_DEF
 from .base_classification_plot import ClassificationPlotBase
 
-try:
-    from IPython.display import display  # type: ignore
-except Exception:  # pragma: no cover
-    display = None
-
-
 def _row_normalize(cm: np.ndarray) -> np.ndarray:
     """Normalize confusion matrix by row (each row sums to 1)."""
     row_sums = cm.sum(axis=1, keepdims=True)
@@ -282,21 +276,7 @@ class ConfusionMatrixPlot(ClassificationPlotBase):
                     ax.set_title(f"Confusion Matrix (N={cm_raw.sum()})")
 
             plt.tight_layout()
-            if save_path is not None:
-                save_path = str(save_path)
-                fig.savefig(save_path, dpi=150, bbox_inches="tight")
-            if show:
-                backend = plt.get_backend().lower()
-                if backend.startswith("agg"):
-                    if display is not None:
-                        try:
-                            display(fig)
-                        except Exception:
-                            pass
-                else:
-                    plt.show()
-            plt.close(fig)
-            return save_path
+            return self._finalize_figure(fig, save_path=save_path, show=show)
 
         # Multi-label / binary: per-class 2x2 matrices, nxn matrix, or summary view
         y_pred = (y_score >= threshold).astype(int)
@@ -582,19 +562,4 @@ class ConfusionMatrixPlot(ClassificationPlotBase):
                     ax.set_title(f"{labels[idx]} (N={cm_raw.sum()})")
 
         plt.tight_layout()
-        if save_path is not None:
-            save_path = str(save_path)
-            fig.savefig(save_path, dpi=150, bbox_inches="tight")
-        if show:
-            backend = plt.get_backend().lower()
-            if backend.startswith("agg"):
-                if display is not None:
-                    try:
-                        display(fig)
-                    except Exception:
-                        # Fall back silently when display is unavailable
-                        pass
-            else:
-                plt.show()
-        plt.close(fig)
-        return save_path
+        return self._finalize_figure(fig, save_path=save_path, show=show)

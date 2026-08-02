@@ -9,12 +9,6 @@ import matplotlib.pyplot as plt
 from .base_plot import BasePlot
 from .registry import REGISTRY as PLOT_REGISTRY_DEF
 
-try:
-    from IPython.display import display  # type: ignore
-except Exception:  # pragma: no cover - optional
-    display = None
-
-
 def _resolve_histories(train_losses, val_losses=None):
     """Accept either explicit loss arrays or a LightningModule with stored histories."""
     if hasattr(train_losses, "train_epoch_loss_history"):
@@ -140,22 +134,4 @@ class LossCurvesPlot(BasePlot):
             ax_train.legend(handles, labels)
         fig.tight_layout()
 
-        # Save
-        if save_path is not None:
-            save_path = str(save_path)
-            fig.savefig(save_path, dpi=150, bbox_inches="tight")
-
-        # Show
-        if show:
-            backend = plt.get_backend().lower()
-            if backend.startswith("agg"):
-                if display is not None:
-                    try:
-                        display(fig)
-                    except Exception:
-                        pass
-            else:
-                plt.show()
-
-        plt.close(fig)
-        return save_path
+        return self._finalize_figure(fig, save_path=save_path, show=show)
