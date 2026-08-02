@@ -7,6 +7,7 @@ from .factory import OutputBackendFactory, REGISTRY
 from .base_output_backend import OutputBackend
 from .parquet_output_backend import ParquetOutputBackend
 from .rntuple_output_backend import RNTupleOutputBackend
+from .pioneer_rntuple_output_backend import PioneerRNTupleOutputBackend
 
 
 def register_output_backend(name: str, backend_cls: type[OutputBackend]) -> None:
@@ -25,4 +26,4 @@ def list_output_backends() -> list[str]:
 
 
 # Keep import side-effect explicit for built-ins in this namespace.
-_ = (ParquetOutputBackend, RNTupleOutputBackend)
+_ = (ParquetOutputBackend, RNTupleOutputBackend, PioneerRNTupleOutputBackend)

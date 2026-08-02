@@ -210,7 +210,13 @@ class RNTupleOutputBackend(OutputBackend):
         if sink.writer is not None:
             sink.writer.Close()
             sink.writer = None
+            self._finalize_part_file(sink=sink)
             os.replace(sink.part_path, sink.dst_path)
+
+    def _finalize_part_file(self, *, sink: _RNTupleSink) -> None:
+        """Allow specialized RNTuple backends to add file-level metadata."""
+
+        _ = sink
 
     def write_table_atomic(self, *, table: pa.Table, dst_path: Path) -> None:
         sink = self.open_sink(dst_path=dst_path)
